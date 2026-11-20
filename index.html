@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS-Lab SJF Simulator</title>
+    
+    <!-- Library Tailwind CSS untuk Desain -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Konfigurasi Tema Warna Kustom (Sesuai Gambar) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        theme: {
+                            900: '#200017', // Darkest (Hitam Keunguan)
+                            700: '#561D47', // Dark (Plum)
+                            500: '#AD6B98', // Medium (Mauve)
+                            300: '#EAA8BA', // Light (Pink Muda)
+                            100: '#FAF2EB', // Lightest (Cream/Off-white)
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Library React JS -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Library Babel untuk membaca kode JSX (React) di Browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Library FontAwesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Custom Scrollbar agar senada dengan tema */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #FAF2EB; }
+        ::-webkit-scrollbar-thumb { background: #AD6B98; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #561D47; }
+    </style>
+</head>
+<body class="bg-theme-100 text-theme-900">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Warna untuk Gantt Chart (Disesuaikan agar tetap kontras tapi senada)
+        const COLORS = [
+          '#561D47', '#AD6B98', '#EAA8BA', '#200017', 
+          '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'
+        ];
+
+        function App() {
+          const [activeTab, setActiveTab] = useState('beranda');
+
+          return (
+            <div className="min-h-screen bg-theme-100 font-sans text-theme-900 selection:bg-theme-300 selection:text-theme-900">
+              {/* Navbar */}
+              <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-theme-300 shadow-sm">
+                <div className="max-w-6xl mx-auto px-4">
+                  <div className="flex justify-between items-center h-16">
+                    <div className="flex items-center space-x-3">
+                      <div className="bg-theme-700 w-10 h-10 flex items-center justify-center rounded-lg text-theme-100 shadow-md">
+                        <i className="fas fa-calculator"></i>
+                      </div>
+                      <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-theme-700 to-theme-500">
+                        OS-Lab
+                      </span>
+                    </div>
+                    <div className="hidden md:flex space-x-1">
+                      <NavItem icon={<i className="fas fa-home"></i>} label="Beranda" isActive={activeTab === 'beranda'} onClick={() => setActiveTab('beranda')} />
+                      <NavItem icon={<i className="fas fa-book"></i>} label="Materi" isActive={activeTab === 'materi'} onClick={() => setActiveTab('materi')} />
+                      <NavItem icon={<i className="fas fa-play"></i>} label="Simulator" isActive={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} />
+                      <NavItem icon={<i className="fas fa-question-circle"></i>} label="Kuis" isActive={activeTab === 'kuis'} onClick={() => setActiveTab('kuis')} />
+                      <NavItem icon={<i className="fas fa-users"></i>} label="Tentang" isActive={activeTab === 'tentang'} onClick={() => setActiveTab('tentang')} />
+                    </div>
+                    {/* Mobile Menu */}
+                    <div className="md:hidden flex overflow-x-auto space-x-2 pb-2 mt-2 w-full absolute top-16 left-0 bg-white/95 px-4 border-b border-theme-300">
+                      <NavItem icon={<i className="fas fa-home"></i>} label="Home" isActive={activeTab === 'beranda'} onClick={() => setActiveTab('beranda')} />
+                      <NavItem icon={<i className="fas fa-book"></i>} label="Materi" isActive={activeTab === 'materi'} onClick={() => setActiveTab('materi')} />
+                      <NavItem icon={<i className="fas fa-play"></i>} label="Simulasi" isActive={activeTab === 'simulator'} onClick={() => setActiveTab('simulator')} />
+                      <NavItem icon={<i className="fas fa-question-circle"></i>} label="Kuis" isActive={activeTab === 'kuis'} onClick={() => setActiveTab('kuis')} />
+                      <NavItem icon={<i className="fas fa-users"></i>} label="Tentang" isActive={activeTab === 'tentang'} onClick={() => setActiveTab('tentang')} />
+                    </div>
+                  </div>
+                </div>
+              </nav>
+
+              {/* Main Content Area */}
+              <main className="max-w-6xl mx-auto px-4 py-8 md:mt-4">
+                {activeTab === 'beranda' && <BerandaView onNavigate={setActiveTab} />}
+                {activeTab === 'materi' && <MateriView />}
+                {activeTab === 'simulator' && <SimulatorView />}
+                {activeTab === 'kuis' && <KuisView />}
+                {activeTab === 'tentang' && <TentangView />}
+              </main>
+            </div>
+          );
+        }
+
+        function NavItem({ icon, label, isActive, onClick }) {
+          return (
+            <button
+              onClick={onClick}
+              className={`flex items-center space-x-1.5 px-3 py-2 rounded-md text-sm font-bold transition-all ${
+                isActive 
+                  ? 'bg-theme-300 text-theme-900 shadow-sm' 
+                  : 'text-theme-700 hover:bg-theme-300/50 hover:text-theme-900'
+              }`}
+            >
+              {icon}
+              <span>{label}</span>
+            </button>
+          );
+        }
+
+        /* =========================================================================
+           1. BERANDA VIEW
+        ========================================================================= */
+        function BerandaView({ onNavigate }) {
+          return (
+            <div className="flex flex-col md:flex-row items-center justify-between gap-12 mt-8">
+              <div className="flex-1 space-y-6">
+                <div className="inline-block px-4 py-1.5 bg-theme-300/40 text-theme-700 rounded-full text-sm font-bold tracking-wide border border-theme-500/30 shadow-sm">
+                  Sistem Operasi - Media Pembelajaran
+                </div>
+                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-theme-900 leading-tight drop-shadow-sm">
+                  Pahami Penjadwalan CPU <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-theme-700 to-theme-500">Lebih Interaktif & Visual</span>
+                </h1>
+                <p className="text-lg text-theme-700/80 max-w-lg leading-relaxed font-medium">
+                  Eksplorasi algoritma penjadwalan <b>Shortest Job First (SJF)</b> dan <b>Shortest Remaining Time First (SRTF)</b> dengan visualisasi Gantt Chart langsung. Tanpa teori membosankan, langsung praktik!
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                  <button 
+                    onClick={() => onNavigate('simulator')}
+                    className="flex items-center justify-center space-x-2 bg-theme-700 hover:bg-theme-900 text-theme-100 px-6 py-3 rounded-xl font-bold transition-transform transform hover:-translate-y-1 shadow-lg shadow-theme-700/30"
+                  >
+                    <i className="fas fa-play"></i>
+                    <span>Mulai Simulator</span>
+                  </button>
+                  <button 
+                    onClick={() => onNavigate('materi')}
+                    className="flex items-center justify-center space-x-2 bg-white hover:bg-theme-300 text-theme-700 border-2 border-theme-300 px-6 py-3 rounded-xl font-bold transition-colors shadow-sm"
+                  >
+                    <i className="fas fa-book-open"></i>
+                    <span>Pelajari Teori</span>
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 relative w-full max-w-md">
+                {/* Decorative Blob */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-theme-300 to-theme-500 rounded-full blur-3xl opacity-40 animate-pulse"></div>
+                <div className="relative bg-white border border-theme-300 rounded-2xl shadow-2xl p-6 transform rotate-1 hover:rotate-0 transition-transform duration-300">
+                  <div className="flex space-x-2 mb-4 border-b border-theme-100 pb-4">
+                    <div className="w-3 h-3 rounded-full bg-theme-300"></div>
+                    <div className="w-3 h-3 rounded-full bg-theme-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-theme-700"></div>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="h-4 bg-theme-100 rounded w-1/3"></div>
+                    <div className="flex gap-2">
+                      <div className="h-10 bg-theme-700 rounded w-1/4 animate-pulse"></div>
+                      <div className="h-10 bg-theme-500 rounded w-1/2 animate-pulse" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="h-10 bg-theme-900 rounded w-1/4 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                    <div className="space-y-2 pt-4">
+                      <div className="h-3 bg-theme-100 rounded"></div>
+                      <div className="h-3 bg-theme-100 rounded w-5/6"></div>
+                      <div className="h-3 bg-theme-100 rounded w-4/6"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        /* =========================================================================
+           2. MATERI VIEW
+        ========================================================================= */
+        function MateriView() {
+          return (
+            <div className="max-w-4xl mx-auto space-y-10">
+              <div className="text-center space-y-4">
+                <h2 className="text-3xl font-bold text-theme-900 drop-shadow-sm">Konsep Shortest Job First (SJF)</h2>
+                <p className="text-theme-700 text-lg font-medium">Pelajari cara CPU mengalokasikan waktu ke proses-proses yang ada.</p>
+              </div>
+
+              <div className="bg-white rounded-2xl p-6 md:p-8 shadow-md border border-theme-300">
+                <h3 className="text-xl font-bold mb-4 text-theme-700 flex items-center gap-2">
+                  <i className="fas fa-book"></i> Definisi & Prinsip Kerja
+                </h3>
+                <p className="text-theme-900 leading-relaxed mb-4">
+                  <b>Shortest Job First (SJF)</b> adalah algoritma penjadwalan CPU yang memprioritaskan proses dengan <b>Burst Time (waktu eksekusi) terkecil/terpendek</b>. Prinsip utamanya adalah: semakin singkat tugasnya, semakin cepat ia diselesaikan, yang pada akhirnya akan menghasilkan rata-rata waktu tunggu (Average Waiting Time) yang paling optimal dibandingkan algoritma lain.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-white rounded-2xl p-6 shadow-md border border-theme-300 border-t-4 border-t-theme-700 hover:-translate-y-1 transition-transform">
+                  <h4 className="text-lg font-bold mb-3 text-theme-900">SJF Non-Preemptive</h4>
+                  <p className="text-theme-700 mb-4 text-sm leading-relaxed">
+                    Sekali sebuah proses mendapatkan akses CPU, proses tersebut akan berjalan terus hingga selesai (Burst Time habis). Meskipun ada proses baru yang datang dengan waktu lebih singkat, proses yang sedang berjalan tidak akan diinterupsi.
+                  </p>
+                  <ul className="text-sm text-theme-700 font-medium space-y-2 list-disc pl-4 marker:text-theme-500">
+                    <li>Sederhana untuk diimplementasikan.</li>
+                    <li>Tidak ada overhead pergantian proses (context switch).</li>
+                  </ul>
+                </div>
+                <div className="bg-white rounded-2xl p-6 shadow-md border border-theme-300 border-t-4 border-t-theme-500 hover:-translate-y-1 transition-transform">
+                  <h4 className="text-lg font-bold mb-3 text-theme-900">SJF Preemptive (SRTF)</h4>
+                  <p className="text-theme-700 mb-4 text-sm leading-relaxed">
+                    Dikenal juga sebagai <i>Shortest Remaining Time First</i>. Jika ada proses baru datang dengan Burst Time lebih kecil dari <b>sisa waktu</b> proses yang sedang berjalan, proses yang berjalan akan disela (preempt) dan dikembalikan ke ready queue.
+                  </p>
+                  <ul className="text-sm text-theme-700 font-medium space-y-2 list-disc pl-4 marker:text-theme-500">
+                    <li>Seringkali menghasilkan waktu tunggu rata-rata lebih kecil.</li>
+                    <li>Membutuhkan overhead pemrosesan yang lebih tinggi.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="bg-theme-300/30 rounded-2xl p-6 border border-theme-500">
+                <h4 className="text-lg font-bold mb-2 text-theme-900 flex items-center gap-2">
+                  <i className="fas fa-exclamation-triangle text-theme-700"></i> Isu Starvation (Kelaparan)
+                </h4>
+                <p className="text-theme-900 text-sm leading-relaxed">
+                  Kelemahan terbesar algoritma SJF (baik Preemptive maupun Non-Preemptive) adalah <b>Starvation</b>. Jika secara terus-menerus terdapat aliran proses pendek yang datang, maka proses dengan Burst Time yang panjang tidak akan pernah mendapatkan jatah CPU (kelaparan). Solusi umumnya adalah menggunakan teknik <i>Aging</i> (meningkatkan prioritas proses seiring berjalannya waktu tunggu).
+                </p>
+              </div>
+
+              <div className="bg-theme-900 text-theme-100 rounded-2xl p-6 md:p-8 shadow-xl">
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-theme-300">
+                  <i className="fas fa-calculator"></i> Rumus Perhitungan
+                </h3>
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <h5 className="text-white font-bold">Turnaround Time (TAT)</h5>
+                    <p className="text-sm text-theme-300">Total waktu yang dihabiskan proses di sistem.</p>
+                    <div className="bg-theme-700 p-3 rounded-lg font-mono text-sm border border-theme-500 shadow-inner">
+                      TAT = Completion Time (CT) - Arrival Time (AT)
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h5 className="text-white font-bold">Waiting Time (WT)</h5>
+                    <p className="text-sm text-theme-300">Total waktu proses menunggu di Ready Queue.</p>
+                    <div className="bg-theme-700 p-3 rounded-lg font-mono text-sm border border-theme-500 shadow-inner">
+                      WT = Turnaround Time (TAT) - Burst Time (BT)
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        /* =========================================================================
+           3. SIMULATOR VIEW
+        ========================================================================= */
+        function SimulatorView() {
+          const [processes, setProcesses] = useState([
+            { id: 1, name: 'P1', at: 0, bt: 5, color: COLORS[0] },
+            { id: 2, name: 'P2', at: 1, bt: 3, color: COLORS[1] },
+            { id: 3, name: 'P3', at: 2, bt: 8, color: COLORS[2] },
+            { id: 4, name: 'P4', at: 3, bt: 6, color: COLORS[3] },
+          ]);
+          
+          const [algorithm, setAlgorithm] = useState('non-preemptive');
+          const [simulationData, setSimulationData] = useState(null);
+
+          const addProcess = () => {
+            const newId = processes.length > 0 ? Math.max(...processes.map(p => p.id)) + 1 : 1;
+            setProcesses([...processes, { 
+              id: newId, 
+              name: `P${newId}`, 
+              at: 0, 
+              bt: 1, 
+              color: COLORS[(newId - 1) % COLORS.length] 
+            }]);
+            setSimulationData(null);
+          };
+
+          const removeProcess = (id) => {
+            setProcesses(processes.filter(p => p.id !== id));
+            setSimulationData(null);
+          };
+
+          const updateProcess = (id, field, value) => {
+            const val = parseInt(value, 10);
+            setProcesses(processes.map(p => 
+              p.id === id ? { ...p, [field]: isNaN(val) || val < 0 ? 0 : val } : p
+            ));
+            setSimulationData(null);
+          };
+
+          const generateRandom = () => {
+            const num = Math.floor(Math.random() * 3) + 3;
+            const newProcs = Array.from({ length: num }).map((_, i) => ({
+              id: i + 1,
+              name: `P${i + 1}`,
+              at: Math.floor(Math.random() * 8),
+              bt: Math.floor(Math.random() * 8) + 1,
+              color: COLORS[i % COLORS.length]
+            }));
+            setProcesses(newProcs);
+            setSimulationData(null);
+          };
+
+          const runSimulation = () => {
+            if (processes.length === 0) return;
+            const procs = processes.map(p => ({ ...p, rt: p.bt, ct: 0, tat: 0, wt: 0 }));
+            let time = 0;
+            let completed = 0;
+            const n = procs.length;
+            let ganttChart = [];
+            let currentBlock = null;
+
+            const isPreemptive = algorithm === 'preemptive';
+
+            while (completed < n) {
+              let available = procs.filter(p => p.at <= time && p.rt > 0);
+
+              if (available.length === 0) {
+                if (currentBlock && currentBlock.id === 'IDLE') {
+                  currentBlock.end = time + 1;
+                } else {
+                  if (currentBlock) ganttChart.push({ ...currentBlock });
+                  currentBlock = { id: 'IDLE', name: 'Idle', color: '#FAF2EB', start: time, end: time + 1 };
+                }
+                time++;
+                continue;
+              }
+
+              available.sort((a, b) => {
+                if (a.rt === b.rt) return a.at - b.at; 
+                return a.rt - b.rt;
+              });
+
+              const selected = available[0];
+
+              if (isPreemptive) {
+                if (currentBlock && currentBlock.id === selected.id) {
+                  currentBlock.end = time + 1;
+                } else {
+                  if (currentBlock) ganttChart.push({ ...currentBlock });
+                  currentBlock = { id: selected.id, name: selected.name, color: selected.color, start: time, end: time + 1 };
+                }
+                selected.rt -= 1;
+                time += 1;
+                if (selected.rt === 0) {
+                  selected.ct = time;
+                  selected.tat = selected.ct - selected.at;
+                  selected.wt = selected.tat - selected.bt;
+                  completed++;
+                }
+              } else {
+                const timeToRun = selected.rt;
+                if (currentBlock) ganttChart.push({ ...currentBlock });
+                currentBlock = { id: selected.id, name: selected.name, color: selected.color, start: time, end: time + timeToRun };
+                time += timeToRun;
+                selected.rt = 0;
+                selected.ct = time;
+                selected.tat = selected.ct - selected.at;
+                selected.wt = selected.tat - selected.bt;
+                completed++;
+              }
+            }
+            if (currentBlock) ganttChart.push({ ...currentBlock });
+
+            let totalTat = 0, totalWt = 0;
+            procs.forEach(p => { totalTat += p.tat; totalWt += p.wt; });
+
+            setSimulationData({
+              results: procs,
+              gantt: ganttChart,
+              avgTat: totalTat / n,
+              avgWt: totalWt / n
+            });
+          };
+
+          return (
+            <div className="space-y-8">
+              <div className="bg-white p-6 rounded-2xl shadow-md border border-theme-300">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-theme-900">Data Proses</h2>
+                    <p className="text-sm text-theme-700 font-medium">Masukkan Arrival Time dan Burst Time</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button 
+                      onClick={generateRandom}
+                      className="text-sm flex items-center gap-2 px-4 py-2 bg-theme-100 hover:bg-theme-300 text-theme-900 font-bold rounded-lg border border-theme-300 transition"
+                    >
+                      <i className="fas fa-sync-alt"></i> Acak Data
+                    </button>
+                    <div className="bg-theme-100 p-1 rounded-lg inline-flex border border-theme-300">
+                      <button
+                        onClick={() => {setAlgorithm('non-preemptive'); setSimulationData(null);}}
+                        className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${algorithm === 'non-preemptive' ? 'bg-theme-700 shadow text-white' : 'text-theme-700 hover:text-theme-900 hover:bg-theme-300/50'}`}
+                      >
+                        SJF
+                      </button>
+                      <button
+                        onClick={() => {setAlgorithm('preemptive'); setSimulationData(null);}}
+                        className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${algorithm === 'preemptive' ? 'bg-theme-700 shadow text-white' : 'text-theme-700 hover:text-theme-900 hover:bg-theme-300/50'}`}
+                      >
+                        SRTF
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto rounded-xl border border-theme-300">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-theme-700 text-white border-b border-theme-900">
+                        <th className="p-3 font-semibold w-16 text-center">Warna</th>
+                        <th className="p-3 font-semibold">Proses</th>
+                        <th className="p-3 font-semibold">Arrival Time (AT)</th>
+                        <th className="p-3 font-semibold">Burst Time (BT)</th>
+                        <th className="p-3 font-semibold w-16 text-center">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {processes.map((p) => (
+                        <tr key={p.id} className="border-b border-theme-100 hover:bg-theme-100/50 transition font-medium">
+                          <td className="p-3 text-center">
+                            <div className="w-6 h-6 rounded border border-theme-900 shadow-sm mx-auto" style={{ backgroundColor: p.color }}></div>
+                          </td>
+                          <td className="p-3 font-bold text-theme-900">{p.name}</td>
+                          <td className="p-3">
+                            <input 
+                              type="number" min="0" 
+                              value={p.at}
+                              onChange={(e) => updateProcess(p.id, 'at', e.target.value)}
+                              className="w-full p-2 bg-white border border-theme-300 rounded focus:ring-2 focus:ring-theme-500 focus:border-theme-500 outline-none transition" 
+                            />
+                          </td>
+                          <td className="p-3">
+                            <input 
+                              type="number" min="1" 
+                              value={p.bt}
+                              onChange={(e) => updateProcess(p.id, 'bt', e.target.value)}
+                              className="w-full p-2 bg-white border border-theme-300 rounded focus:ring-2 focus:ring-theme-500 focus:border-theme-500 outline-none transition" 
+                            />
+                          </td>
+                          <td className="p-3 text-center">
+                            <button 
+                              onClick={() => removeProcess(p.id)}
+                              className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition"
+                              title="Hapus Proses"
+                            >
+                              <i className="fas fa-trash"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <button 
+                    onClick={addProcess}
+                    className="flex items-center gap-2 text-theme-700 hover:text-theme-900 font-bold px-4 py-2 bg-theme-100 hover:bg-theme-300 rounded-lg transition border border-theme-300"
+                  >
+                    <i className="fas fa-plus"></i> Tambah Proses
+                  </button>
+                  
+                  <button 
+                    onClick={runSimulation}
+                    className="flex items-center w-full sm:w-auto justify-center gap-2 bg-theme-700 hover:bg-theme-900 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-theme-700/40 transition-transform transform active:scale-95"
+                  >
+                    <i className="fas fa-play"></i> Simulasikan Sekarang
+                  </button>
+                </div>
+              </div>
+
+              {simulationData && (
+                <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+                  {/* Gantt Chart Section */}
+                  <div className="bg-white p-6 rounded-2xl shadow-md border border-theme-300">
+                    <h3 className="text-xl font-bold text-theme-900 mb-6 flex items-center gap-2">
+                      <i className="fas fa-chart-bar text-theme-500"></i> Gantt Chart Visualisasi
+                    </h3>
+                    
+                    <div className="relative pt-2 pb-8 px-4 bg-theme-100 rounded-xl border border-theme-300 overflow-x-auto shadow-inner">
+                      <div className="min-w-[600px] w-full mt-4">
+                        {/* Chart Bars */}
+                        <div className="flex h-16 rounded-lg overflow-hidden border-2 border-theme-900 shadow-md relative z-10">
+                          {simulationData.gantt.map((block, idx) => {
+                            const totalTime = simulationData.gantt[simulationData.gantt.length - 1].end;
+                            const widthPercent = ((block.end - block.start) / totalTime) * 100;
+                            return (
+                              <div 
+                                key={idx} 
+                                className="h-full flex items-center justify-center font-bold text-sm relative group border-r border-theme-900/20 last:border-r-0 hover:brightness-110 transition cursor-default"
+                                style={{ 
+                                  width: `${widthPercent}%`, 
+                                  backgroundColor: block.color,
+                                  color: block.id === 'IDLE' ? '#561D47' : '#fff'
+                                }}
+                              >
+                                {block.name}
+                                {/* Tooltip */}
+                                <div className="opacity-0 group-hover:opacity-100 absolute -top-12 bg-theme-900 text-theme-100 text-xs px-3 py-1.5 rounded-md transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg border border-theme-700 font-mono">
+                                  {block.name}: [{block.start} - {block.end}]
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        
+                        {/* Time Markers */}
+                        <div className="flex relative h-6 mt-2 text-xs text-theme-700 font-bold">
+                          {simulationData.gantt.map((block, idx) => {
+                            const totalTime = simulationData.gantt[simulationData.gantt.length - 1].end;
+                            const leftPercent = (block.start / totalTime) * 100;
+                            return (
+                              <div 
+                                key={`start-${idx}`} 
+                                className="absolute transform -translate-x-1/2 before:content-[''] before:absolute before:-top-2 before:left-1/2 before:w-[2px] before:h-2 before:bg-theme-700"
+                                style={{ left: `${leftPercent}%` }}
+                              >
+                                {block.start}
+                              </div>
+                            );
+                          })}
+                          {/* Last Marker */}
+                          <div 
+                            className="absolute transform -translate-x-1/2 before:content-[''] before:absolute before:-top-2 before:left-1/2 before:w-[2px] before:h-2 before:bg-theme-700"
+                            style={{ left: '100%' }}
+                          >
+                            {simulationData.gantt[simulationData.gantt.length - 1].end}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Results Table Section */}
+                  <div className="bg-white p-6 rounded-2xl shadow-md border border-theme-300">
+                     <h3 className="text-xl font-bold text-theme-900 mb-4 flex items-center gap-2">
+                      <i className="fas fa-table text-theme-500"></i> Tabel Hasil Perhitungan
+                    </h3>
+                    <div className="overflow-x-auto rounded-xl border border-theme-300">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-theme-900 text-theme-100">
+                            <th className="p-3 font-semibold">Proses</th>
+                            <th className="p-3 font-semibold text-center">AT</th>
+                            <th className="p-3 font-semibold text-center">BT</th>
+                            <th className="p-3 font-semibold text-center text-theme-300">CT</th>
+                            <th className="p-3 font-semibold text-center bg-theme-700">TAT</th>
+                            <th className="p-3 font-semibold text-center bg-theme-500 text-white">WT</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {simulationData.results.map((p) => (
+                            <tr key={p.id} className="border-b border-theme-100 hover:bg-theme-100/50 font-medium">
+                              <td className="p-3 flex items-center gap-2 font-bold text-theme-900">
+                                <div className="w-4 h-4 rounded shadow-sm border border-theme-900" style={{ backgroundColor: p.color }}></div>
+                                {p.name}
+                              </td>
+                              <td className="p-3 text-center text-theme-700">{p.at}</td>
+                              <td className="p-3 text-center text-theme-700">{p.bt}</td>
+                              <td className="p-3 text-center font-mono text-theme-900 font-bold">{p.ct}</td>
+                              <td className="p-3 text-center font-mono bg-theme-100/50 text-theme-700 font-bold border-l border-r border-theme-100">{p.tat}</td>
+                              <td className="p-3 text-center font-mono bg-theme-300/20 text-theme-900 font-bold">{p.wt}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mt-6">
+                      <div className="bg-theme-100 p-4 rounded-xl border border-theme-300 flex flex-col md:flex-row items-center justify-between shadow-sm">
+                        <span className="text-theme-700 font-bold">Rata-rata TAT</span>
+                        <span className="text-3xl font-black text-theme-900 font-mono">{simulationData.avgTat.toFixed(2)}</span>
+                      </div>
+                      <div className="bg-theme-300/40 p-4 rounded-xl border border-theme-500 flex flex-col md:flex-row items-center justify-between shadow-sm">
+                        <span className="text-theme-900 font-bold">Rata-rata WT</span>
+                        <span className="text-3xl font-black text-theme-700 font-mono">{simulationData.avgWt.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        /* =========================================================================
+           4. KUIS VIEW (50 BANK SOAL DENGAN 10 RANDOM)
+        ========================================================================= */
+        // Generator Data 50 Bank Soal (Disimpan di luar komponen agar tidak dirender ulang)
+        const BANK_SOAL = [
+            { text: "Apa singkatan dari SJF?", options: [{v:"A",t:"Shortest Job First"},{v:"B",t:"System Job First"},{v:"C",t:"Shortest Jump First"},{v:"D",t:"System Jump Forward"}], correct: "A", exp: "SJF adalah Shortest Job First, memprioritaskan burst time terkecil." },
+            { text: "Apa kelemahan utama dari algoritma SJF?", options: [{v:"A",t:"Waktu tunggu yang lama untuk semua proses"},{v:"B",t:"Bisa menyebabkan Starvation pada proses panjang"},{v:"C",t:"Sangat mudah diprediksi"},{v:"D",t:"Menyebabkan deadlock"}], correct: "B", exp: "Proses dengan burst time besar bisa terus tertunda (starvation) jika proses pendek terus berdatangan." },
+            { text: "Rumus untuk menghitung Waiting Time (WT) adalah?", options: [{v:"A",t:"TAT - BT"},{v:"B",t:"CT - AT"},{v:"C",t:"BT - AT"},{v:"D",t:"TAT + BT"}], correct: "A", exp: "Waiting Time = Turnaround Time dikurangi Burst Time." },
+            { text: "Pada SRTF, kapan preemption (penyelaan) terjadi?", options: [{v:"A",t:"Setiap 1 ms"},{v:"B",t:"Saat proses baru datang dengan sisa waktu lebih kecil"},{v:"C",t:"Saat CPU idle"},{v:"D",t:"Saat proses selesai"}], correct: "B", exp: "SRTF mengevaluasi sisa waktu setiap kali ada proses baru yang masuk ke antrean (Ready Queue)." },
+            { text: "Kepanjangan dari SRTF adalah...", options: [{v:"A",t:"Shortest Running Time First"},{v:"B",t:"Shortest Remaining Time First"},{v:"C",t:"System Resource Time First"},{v:"D",t:"Simple Round Time First"}], correct: "B", exp: "Shortest Remaining Time First adalah versi preemptive dari SJF." },
+            { text: "Rumus perhitungan Turnaround Time (TAT) adalah?", options: [{v:"A",t:"CT - AT"},{v:"B",t:"WT + AT"},{v:"C",t:"BT - AT"},{v:"D",t:"CT + BT"}], correct: "A", exp: "TAT dihitung dari waktu selesai (CT) dikurangi waktu kedatangan (AT)." },
+            { text: "Jika dua proses di SJF memiliki Burst Time yang sama, aturan apa yang umumnya dipakai?", options: [{v:"A",t:"Random"},{v:"B",t:"Proses ID terkecil"},{v:"C",t:"First Come First Serve (Arrival Time terkecil)"},{v:"D",t:"Proses dibatalkan"}], correct: "C", exp: "Jika terjadi tie (seri), algoritma akan menggunakan prinsip FCFS (siapa yang datang lebih dulu)." },
+            { text: "Algoritma penjadwalan mana yang secara teori memberikan Average Waiting Time paling minimum?", options: [{v:"A",t:"FCFS"},{v:"B",t:"Round Robin"},{v:"C",t:"SJF"},{v:"D",t:"Priority"}], correct: "C", exp: "SJF terbukti secara matematis optimal dalam meminimalkan rata-rata waktu tunggu." },
+            { text: "Apa solusi untuk mengatasi masalah kelaparan (Starvation)?", options: [{v:"A",t:"Context Switching"},{v:"B",t:"Multithreading"},{v:"C",t:"Deadlock Prevention"},{v:"D",t:"Aging"}], correct: "D", exp: "Aging secara bertahap meningkatkan prioritas proses yang sudah menunggu lama di sistem." },
+            { text: "Apa yang dimaksud dengan Arrival Time (AT)?", options: [{v:"A",t:"Waktu saat proses selesai dieksekusi"},{v:"B",t:"Waktu saat proses pertama kali masuk ke Ready Queue"},{v:"C",t:"Total waktu eksekusi"},{v:"D",t:"Waktu saat proses dihentikan"}], correct: "B", exp: "AT adalah penanda waktu kapan sebuah proses tiba di sistem dan siap dieksekusi." },
+            // Soal 11-20
+            { text: "Apa yang dimaksud dengan Burst Time (BT)?", options: [{v:"A",t:"Waktu yang dibutuhkan CPU untuk mengeksekusi proses"},{v:"B",t:"Waktu proses tiba di sistem"},{v:"C",t:"Waktu proses menunggu di RAM"},{v:"D",t:"Waktu penyelesaian proses"}], correct: "A", exp: "Burst Time adalah durasi aktual yang diperlukan CPU untuk menjalankan sebuah instruksi proses." },
+            { text: "Apa itu Completion Time (CT)?", options: [{v:"A",t:"Waktu eksekusi"},{v:"B",t:"Waktu saat proses benar-benar selesai dieksekusi oleh CPU"},{v:"C",t:"Waktu tunggu maksimum"},{v:"D",t:"Waktu dihentikannya sementara proses"}], correct: "B", exp: "CT adalah penanda waktu (timestamp) kapan sebuah tugas selesai dikerjakan." },
+            { text: "Apa tujuan utama dari algoritma penjadwalan CPU?", options: [{v:"A",t:"Memaksimalkan waktu tunggu"},{v:"B",t:"Memaksimalkan utilisasi CPU"},{v:"C",t:"Mengurangi jumlah proses"},{v:"D",t:"Mematikan sistem lebih cepat"}], correct: "B", exp: "Penjadwalan bertujuan menjaga agar CPU seproduktif mungkin dan tidak banyak menganggur." },
+            { text: "SJF Non-Preemptive berarti...", options: [{v:"A",t:"Proses bisa dipotong di tengah jalan"},{v:"B",t:"Proses harus diselesaikan sebelum CPU dialihkan"},{v:"C",t:"CPU berjalan secara acak"},{v:"D",t:"Semua proses berjalan bersamaan"}], correct: "B", exp: "Dalam mode non-preemptive, CPU tidak akan dilepaskan sampai proses selesai (burst time habis)." },
+            { text: "SRTF adalah singkatan dari?", options: [{v:"A",t:"Shortest Remaining Time First"},{v:"B",t:"System Running Time First"},{v:"C",t:"Shortest Run Time First"},{v:"D",t:"Standard Remaining Time First"}], correct: "A", exp: "SRTF adalah versi preemptive dari SJF." },
+            { text: "Kapan sebuah proses pada SRTF di-preempt?", options: [{v:"A",t:"Ketika time quantum habis"},{v:"B",t:"Ketika ada proses baru datang dengan sisa burst time lebih kecil"},{v:"C",t:"Ketika I/O request terjadi"},{v:"D",t:"Ketika terjadi error"}], correct: "B", exp: "Preemption di SRTF murni berdasarkan perbandingan sisa waktu (remaining time) proses yang ada." },
+            { text: "Pada sistem interaktif, apakah SJF cocok digunakan?", options: [{v:"A",t:"Sangat cocok, karena respon cepat"},{v:"B",t:"Tidak cocok, karena kita tidak bisa tahu burst time secara pasti di awal"},{v:"C",t:"Cocok untuk aplikasi grafis"},{v:"D",t:"Cocok karena tidak ada starvation"}], correct: "B", exp: "SJF sulit diterapkan di OS modern karena mustahil memprediksi secara pasti panjang instruksi pengguna ke depannya." },
+            { text: "Bagaimana sistem operasi memprediksi Burst Time pada SJF di dunia nyata?", options: [{v:"A",t:"Menggunakan ramalan"},{v:"B",t:"Menggunakan teknik Exponential Averaging dari history proses sebelumnya"},{v:"C",t:"Bertanya pada user"},{v:"D",t:"Tidak memprediksi sama sekali"}], correct: "B", exp: "Pendekatan tebakan (Exponential Averaging) digunakan dengan menggabungkan histori eksekusi proses sebelumnya." },
+            { text: "Apa itu Throughput dalam penjadwalan CPU?", options: [{v:"A",t:"Jumlah memori yang digunakan"},{v:"B",t:"Jumlah proses yang diselesaikan dalam satu satuan waktu"},{v:"C",t:"Waktu tunggu maksimum"},{v:"D",t:"Kecepatan clock CPU"}], correct: "B", exp: "Throughput mengukur produktivitas sistem (misal: 10 proses per detik)." },
+            { text: "Manakah yang menghasilkan Average Waiting Time lebih kecil jika set datanya memiliki banyak arrival time berbeda?", options: [{v:"A",t:"SJF Non-Preemptive"},{v:"B",t:"SRTF (Preemptive)"},{v:"C",t:"Hasilnya selalu sama persis"},{v:"D",t:"FCFS"}], correct: "B", exp: "SRTF umumnya menghasilkan AWT yang lebih kecil karena segera memberikan CPU ke tugas yang lebih pendek yang baru datang." },
+            // Soal 21-30
+            { text: "Jika P1 (AT=0, BT=5) dan P2 (AT=1, BT=2) dijadwalkan dengan SJF Non-Preemptive, siapa yang selesai lebih dulu?", options: [{v:"A",t:"P1"},{v:"B",t:"P2"},{v:"C",t:"Selesai bersamaan"},{v:"D",t:"Deadlock"}], correct: "A", exp: "Karena P1 masuk di detik 0 dan mode non-preemptive dipakai, P1 tidak akan dipotong oleh P2." },
+            { text: "Pada kasus yang sama (P1 AT=0 BT=5, P2 AT=1 BT=2) dengan SRTF, apa yang terjadi di detik 1?", options: [{v:"A",t:"P1 terus berlanjut"},{v:"B",t:"P2 memotong P1 karena sisa waktu P1(4) > BT P2(2)"},{v:"C",t:"Keduanya berjalan seri"},{v:"D",t:"Sistem crash"}], correct: "B", exp: "Di detik 1, sisa P1 adalah 4. Karena 4 lebih besar dari 2, maka P2 memotong eksekusi P1." },
+            { text: "Mengapa SRTF membutuhkan lebih banyak overhead sistem dibanding SJF Non-Preemptive?", options: [{v:"A",t:"Karena menghabiskan banyak listrik"},{v:"B",t:"Karena sering terjadi Context Switching antar proses"},{v:"C",t:"Karena memori kepenuhan"},{v:"D",t:"Tidak ada overhead"}], correct: "B", exp: "Sering berpindah proses (Context Switch) mengharuskan OS menyimpan dan memuat state, yang memakan waktu." },
+            { text: "Apa status sebuah proses saat baru tiba di Arrival Time (AT) dan menunggu giliran CPU?", options: [{v:"A",t:"Running"},{v:"B",t:"Waiting / Blocked"},{v:"C",t:"Ready"},{v:"D",t:"Terminated"}], correct: "C", exp: "Proses yang siap dieksekusi tetapi belum mendapat jatah CPU berada di Ready Queue." },
+            { text: "Jika sebuah proses sedang dieksekusi oleh CPU, proses tersebut berada pada state?", options: [{v:"A",t:"Ready"},{v:"B",t:"Running"},{v:"C",t:"Waiting"},{v:"D",t:"New"}], correct: "B", exp: "Status Running diberikan pada proses yang sedang aktif diproses oleh inti CPU." },
+            { text: "Dalam kasus Batch System (tanpa interupsi user), algoritma mana yang seringkali jadi panutan performa optimal?", options: [{v:"A",t:"Round Robin"},{v:"B",t:"SJF"},{v:"C",t:"Priority"},{v:"D",t:"Multilevel Queue"}], correct: "B", exp: "Untuk batch system, SJF ideal karena lamanya pekerjaan (burst time) umumnya sudah diketahui di awal." },
+            { text: "Apakah Aging mengubah Burst Time dari sebuah proses?", options: [{v:"A",t:"Ya, dikurangi perlahan"},{v:"B",t:"Ya, ditambah perlahan"},{v:"C",t:"Tidak, yang diubah adalah tingkat prioritasnya"},{v:"D",t:"Tidak, yang diubah adalah Arrival Time-nya"}], correct: "C", exp: "Aging hanya memanipulasi prioritas (priority class), bukan durasi eksekusi aslinya." },
+            { text: "Apa arti CPU Utilization yang bernilai 100%?", options: [{v:"A",t:"CPU rusak"},{v:"B",t:"CPU menganggur total"},{v:"C",t:"CPU terus sibuk mengerjakan proses tanpa jeda idle"},{v:"D",t:"Sistem terkena virus"}], correct: "C", exp: "Utilisasi 100% berarti tidak ada waktu CPU yang terbuang sia-sia (tidak ada blok Idle)." },
+            { text: "Gantt Chart berguna untuk memvisualisasikan apa?", options: [{v:"A",t:"Penggunaan RAM sistem"},{v:"B",t:"Alur eksekusi dan penjadwalan proses terhadap waktu"},{v:"C",t:"Kapasitas Hardisk"},{v:"D",t:"Struktur direktori file"}], correct: "B", exp: "Gantt chart adalah grafik balok yang menunjukkan urutan waktu CPU mengeksekusi tiap proses." },
+            { text: "Waktu Response (Response Time) adalah waktu antara proses tiba sampai...", options: [{v:"A",t:"Proses selesai"},{v:"B",t:"Proses pertama kali mendapatkan CPU"},{v:"C",t:"Proses masuk ke memory"},{v:"D",t:"Proses dihapus"}], correct: "B", exp: "Response Time diukur dari AT hingga detik pertama proses tersebut dieksekusi." },
+            // Soal 31-40
+            { text: "Apakah SJF Non-Preemptive bisa terjadi context switch?", options: [{v:"A",t:"Tidak pernah sama sekali"},{v:"B",t:"Hanya ketika proses selesai dieksekusi atau meminta I/O"},{v:"C",t:"Setiap detik"},{v:"D",t:"Setiap ada proses baru"}], correct: "B", exp: "Context switch tetap ada di Non-preemptive, tetapi hanya terjadi murni saat proses selesai (terminated) atau voluntarily melepas CPU." },
+            { text: "Apa yang terjadi jika Ready Queue kosong (tidak ada proses)?", options: [{v:"A",t:"CPU Idle (Menganggur)"},{v:"B",t:"CPU mati (shutdown)"},{v:"C",t:"Sistem Crash"},{v:"D",t:"CPU melakukan preemption"}], correct: "A", exp: "CPU akan berada di status Idle sampai ada proses baru yang datang sesuai Arrival Time-nya." },
+            { text: "Turnaround Time (TAT) bernilai sama dengan Burst Time (BT) jika...", options: [{v:"A",t:"Arrival Time-nya besar"},{v:"B",t:"Waiting Time-nya 0 (tidak pernah menunggu)"},{v:"C",t:"Menggunakan SRTF"},{v:"D",t:"Terjadi Starvation"}], correct: "B", exp: "Jika TAT = WT + BT, maka TAT sama dengan BT jika dan hanya jika WT = 0." },
+            { text: "Jika terdapat 3 proses dengan BT berurutan: 10, 2, 5 (Semua datang di AT=0). Urutan eksekusi SJF adalah?", options: [{v:"A",t:"10 -> 2 -> 5"},{v:"B",t:"5 -> 2 -> 10"},{v:"C",t:"2 -> 5 -> 10"},{v:"D",t:"2 -> 10 -> 5"}], correct: "C", exp: "Semua datang bersamaan, jadi langsung diurutkan dari BT terkecil: 2, lalu 5, lalu 10." },
+            { text: "Dalam SRTF, proses yang sedang 'Running' akan dipindahkan ke state mana jika terkena preempt?", options: [{v:"A",t:"Terminated"},{v:"B",t:"Waiting/Blocked"},{v:"C",t:"Ready Queue"},{v:"D",t:"New"}], correct: "C", exp: "Proses yang di-preempt hanya disuruh antre kembali, bukan diblokir, sehingga ia masuk ke Ready Queue." },
+            { text: "Rata-rata Waktu Tunggu (Average Waiting Time) dihitung dengan cara?", options: [{v:"A",t:"Total WT dikali jumlah proses"},{v:"B",t:"Total WT dibagi jumlah proses"},{v:"C",t:"Total TAT dibagi jumlah proses"},{v:"D",t:"Mencari nilai WT terbesar"}], correct: "B", exp: "Average adalah rata-rata, yaitu total jumlah dibagi banyak datanya." },
+            { text: "Mana algoritma yang secara inheren (bawaan) bersifat 'Fair' (adil) dan tidak menimbulkan Starvation?", options: [{v:"A",t:"SJF"},{v:"B",t:"SRTF"},{v:"C",t:"Round Robin (RR)"},{v:"D",t:"Priority non-preemptive"}], correct: "C", exp: "Round Robin memberikan batasan waktu (quantum) ke setiap proses secara bergiliran sehingga semua kebagian." },
+            { text: "Sistem penjadwalan CPU pada OS Desktop Modern umumnya turunan dari?", options: [{v:"A",t:"Murni FCFS"},{v:"B",t:"Murni SJF"},{v:"C",t:"Multilevel Feedback Queue / Round Robin dengan Prioritas"},{v:"D",t:"Algoritma Acak"}], correct: "C", exp: "OS Windows/Mac menggunakan variasi kompleks dari antrean bertingkat dan jatah waktu (Round robin)." },
+            { text: "Mengapa SJF disebut 'Optimal'?", options: [{v:"A",t:"Karena kode pemrogramannya paling sedikit"},{v:"B",t:"Karena selalu menghasilkan Average Waiting Time terendah untuk suatu himpunan proses"},{v:"C",t:"Karena bisa berjalan tanpa RAM"},{v:"D",t:"Karena tidak ada bug"}], correct: "B", exp: "Secara matematis dibuktikan, mendahulukan pekerjaan paling pendek selalu meminimalkan antrean total." },
+            { text: "Jika sebuah algoritma memilih proses bukan berdasarkan panjang BT melainkan urutan datang, itu disebut?", options: [{v:"A",t:"SJF"},{v:"B",t:"FCFS"},{v:"C",t:"RR"},{v:"D",t:"SRTF"}], correct: "B", exp: "First-Come First-Serve murni melayani berdasarkan siapa yang lebih dulu tiba." },
+            // Soal 41-50
+            { text: "Parameter apa yang menjadi tolak ukur penentuan 'Shortest Job'?", options: [{v:"A",t:"Arrival Time (Waktu Kedatangan)"},{v:"B",t:"Burst Time (Waktu Eksekusi)"},{v:"C",t:"Waiting Time (Waktu Tunggu)"},{v:"D",t:"Waktu Turnaround"}], correct: "B", exp: "Panjang pendeknya 'Job' diukur dari Burst Time (Estimasi CPU Cycle)." },
+            { text: "Apakah SRTF selalu menghasilkan AWT lebih baik daripada SJF Non-Preemptive?", options: [{v:"A",t:"Ya, tanpa pengecualian"},{v:"B",t:"Umumnya iya, namun jika memperhitungkan overhead Context Switch, hasilnya bisa berbeda di dunia nyata"},{v:"C",t:"Tidak pernah"},{v:"D",t:"Sama saja"}], correct: "B", exp: "Secara teoritis SRTF lebih kecil AWT-nya, tapi di hardware asli, terlalu sering context switch memakan waktu." },
+            { text: "Jika P1 tiba di AT=5 dan P2 tiba di AT=7, selama detik 0 hingga 5 apa yang divisualisasikan di Gantt Chart?", options: [{v:"A",t:"CPU Running P1"},{v:"B",t:"CPU Idle"},{v:"C",t:"CPU Running P2"},{v:"D",t:"Deadlock"}], correct: "B", exp: "Karena belum ada proses yang tiba sebelum detik 5, CPU berada di state Idle (Menganggur)." },
+            { text: "Proses yang mengalami Starvation berarti...", options: [{v:"A",t:"Kekurangan memori"},{v:"B",t:"Menunggu CPU tanpa kepastian selamanya"},{v:"C",t:"Dihapus oleh user"},{v:"D",t:"Menghasilkan output salah"}], correct: "B", exp: "Starvation merujuk pada kondisi ditangguhkan (menunggu di ready queue) secara terus menerus tiada henti." },
+            { text: "Turnaround Time sebuah proses selesai di CT=15 dan AT=2 adalah?", options: [{v:"A",t:"17"},{v:"B",t:"15"},{v:"C",t:"13"},{v:"D",t:"10"}], correct: "C", exp: "TAT = CT - AT = 15 - 2 = 13." },
+            { text: "Jika TAT = 13 dan Burst Time (BT) = 4, maka Waiting Time (WT) adalah?", options: [{v:"A",t:"17"},{v:"B",t:"9"},{v:"C",t:"4"},{v:"D",t:"0"}], correct: "B", exp: "WT = TAT - BT = 13 - 4 = 9." },
+            { text: "Pilih pernyataan yang benar tentang Context Switch.", options: [{v:"A",t:"Merupakan proses gratis bagi CPU"},{v:"B",t:"Membutuhkan waktu untuk menyimpan State PCB (Process Control Block)"},{v:"C",t:"Menurunkan Burst Time"},{v:"D",t:"Hanya ada pada FCFS"}], correct: "B", exp: "Context switch memiliki Overhead (beban) karena sistem harus menyimpan register dan data proses (PCB) ke RAM." },
+            { text: "Algoritma mana yang mungkin menghentikan proses sebelum selesai?", options: [{v:"A",t:"FCFS"},{v:"B",t:"SJF Non-Preemptive"},{v:"C",t:"SRTF (Preemptive)"},{v:"D",t:"Sistem Batch Kuno"}], correct: "C", exp: "SRTF bersifat preemptive, artinya bisa memotong/menginterupsi eksekusi di tengah jalan." },
+            { text: "Berapa Waiting Time proses yang langsung dieksekusi tepat pada saat dia datang, dan tidak pernah di-preempt?", options: [{v:"A",t:"Sama dengan BT"},{v:"B",t:"0"},{v:"C",t:"Sama dengan AT"},{v:"D",t:"Sama dengan TAT"}], correct: "B", exp: "Karena proses tersebut tidak antre sama sekali, waktu tunggunya (WT) adalah 0." },
+            { text: "Pada Gantt chart, panjang dari balok visual sebuah proses menunjukkan?", options: [{v:"A",t:"Arrival Time-nya"},{v:"B",t:"Prioritasnya"},{v:"C",t:"Durasi eksekusi (Burst/Run Time) di rentang waktu tersebut"},{v:"D",t:"Waiting time"}], correct: "C", exp: "Balok pada Gantt Chart merepresentasikan rentang waktu saat CPU menjalankan instruksi proses tersebut." }
+        ];
+
+        function KuisView() {
+          const [questions, setQuestions] = useState([]);
+          const [answers, setAnswers] = useState({});
+          const [submitted, setSubmitted] = useState(false);
+          const [score, setScore] = useState(0);
+
+          // Inisialisasi Kuis (Ambil 10 Soal Acak)
+          useEffect(() => {
+            initQuiz();
+          }, []);
+
+          const initQuiz = () => {
+            // Shuffle (Acak) array BANK_SOAL lalu ambil 10 soal pertama
+            const shuffled = [...BANK_SOAL].sort(() => 0.5 - Math.random());
+            const selected10 = shuffled.slice(0, 10);
+            
+            setQuestions(selected10);
+            
+            // Buat state answers dinamis berdasar index 0-9
+            let initialAnswers = {};
+            selected10.forEach((_, i) => { initialAnswers[`q${i}`] = ''; });
+            setAnswers(initialAnswers);
+            
+            setSubmitted(false);
+            setScore(0);
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll ke atas tiap reset
+          };
+
+          const handleSelect = (qIdx, val) => {
+            if (submitted) return;
+            setAnswers({ ...answers, [`q${qIdx}`]: val });
+          };
+
+          const checkAnswers = () => {
+            let currentScore = 0;
+            questions.forEach((q, idx) => {
+              if (answers[`q${idx}`] === q.correct) currentScore += 1;
+            });
+            setScore(currentScore);
+            setSubmitted(true);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          };
+
+          const isAllAnswered = questions.length > 0 && Object.values(answers).every(val => val !== '');
+
+          if (questions.length === 0) return <div>Memuat kuis...</div>;
+
+          return (
+            <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in duration-500">
+              <div className="text-center space-y-3 mb-8 bg-white p-6 rounded-2xl shadow-md border border-theme-300">
+                <h2 className="text-3xl font-bold text-theme-900">Kuis Pemahaman Evaluatif</h2>
+                <p className="text-theme-700 font-medium">10 Soal Acak (dari 50 Bank Soal) tentang Sistem Operasi.</p>
+                {submitted && (
+                   <div className="mt-4 inline-block px-8 py-4 bg-theme-100 border-2 border-theme-500 rounded-2xl">
+                     <span className="block text-sm font-bold text-theme-700 mb-1">SKOR AKHIR ANDA</span>
+                     <span className="text-5xl font-black text-theme-900">{Math.round((score / 10) * 100)}<span className="text-2xl text-theme-500">/100</span></span>
+                   </div>
+                )}
+              </div>
+
+              {questions.map((q, idx) => (
+                <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-theme-300">
+                  <h3 className="text-lg font-bold text-theme-900 mb-4">
+                    <span className="text-theme-500 mr-1">{idx + 1}.</span> {q.text}
+                  </h3>
+                  <div className="space-y-3">
+                    {q.options.map(opt => {
+                      let btnClass = "w-full text-left p-4 rounded-xl border-2 transition-all font-medium ";
+                      if (submitted) {
+                        if (opt.v === q.correct) {
+                          btnClass += "bg-emerald-50 border-emerald-400 text-emerald-800 shadow-sm";
+                        } else if (answers[`q${idx}`] === opt.v && opt.v !== q.correct) {
+                          btnClass += "bg-red-50 border-red-400 text-red-800 opacity-70";
+                        } else {
+                          btnClass += "bg-theme-100 border-theme-300 text-theme-500 opacity-50";
+                        }
+                      } else {
+                        if (answers[`q${idx}`] === opt.v) {
+                          btnClass += "bg-theme-300/30 border-theme-700 text-theme-900 shadow-sm font-bold";
+                        } else {
+                          btnClass += "bg-white border-theme-300 text-theme-700 hover:bg-theme-100 hover:border-theme-500";
+                        }
+                      }
+
+                      return (
+                        <button 
+                          key={opt.v}
+                          onClick={() => handleSelect(idx, opt.v)}
+                          className={btnClass}
+                          disabled={submitted}
+                        >
+                          <span className="font-bold mr-3 inline-block w-6 h-6 text-center rounded bg-theme-100 text-theme-700 border border-theme-300 shadow-sm">{opt.v}</span> 
+                          {opt.t}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {submitted && (
+                    <div className={`mt-5 p-4 rounded-xl text-sm flex gap-3 items-start border-l-4 ${answers[`q${idx}`] === q.correct ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'bg-red-50 border-red-500 text-red-900'}`}>
+                      {answers[`q${idx}`] === q.correct 
+                        ? <i className="fas fa-check-circle text-xl text-emerald-500 mt-0.5"></i> 
+                        : <i className="fas fa-times-circle text-xl text-red-500 mt-0.5"></i>}
+                      <div>
+                        <strong className="block text-base mb-1">{answers[`q${idx}`] === q.correct ? 'Jawaban Tepat!' : `Kurang Tepat (Kunci: ${q.correct})`}</strong> 
+                        <span className="opacity-90">{q.exp}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              <div className="bg-theme-900 rounded-2xl p-6 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 sticky bottom-4 z-40 border border-theme-700">
+                {!submitted ? (
+                  <>
+                    <div className="text-theme-100 font-medium">
+                      {isAllAnswered ? (
+                        <span className="text-theme-300"><i className="fas fa-check mr-2"></i>Semua soal terjawab. Siap diperiksa!</span>
+                      ) : (
+                        <span><i className="fas fa-info-circle mr-2 text-theme-500"></i>Jawab ke-10 soal di atas.</span>
+                      )}
+                    </div>
+                    <button 
+                      onClick={checkAnswers}
+                      disabled={!isAllAnswered}
+                      className="bg-theme-500 hover:bg-theme-300 disabled:bg-theme-700 disabled:text-theme-500 text-theme-900 disabled:shadow-none px-8 py-3 rounded-xl font-bold transition whitespace-nowrap shadow-lg shadow-theme-500/30"
+                    >
+                      Cek Hasil Jawaban
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-white flex items-center gap-3">
+                      <i className="fas fa-flag-checkered text-2xl text-theme-300"></i>
+                      <span className="font-bold">Kuis Selesai!</span>
+                    </div>
+                    <button 
+                      onClick={initQuiz}
+                      className="bg-theme-300 hover:bg-theme-100 text-theme-900 px-8 py-3 rounded-xl font-bold transition whitespace-nowrap shadow-lg"
+                    >
+                      <i className="fas fa-sync-alt mr-2"></i> Acak & Ulangi Kuis
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        /* =========================================================================
+           5. TENTANG VIEW
+        ========================================================================= */
+        function TentangView() {
+          const tim = [
+            {
+              id: 1,
+              nama: "Siti Aulya Azahra",
+              nim: "4251250009",
+              peran: "Logic & Algorithm",
+              foto: "foto yaya.jpeg" 
+            },
+            {
+              id: 2,
+              nama: "Muhammad Kahfi",
+              nim: "4253250020",
+              peran: "UI/UX & Frontend",
+              foto: "foto kahfi.jpeg"
+            },
+            {
+              id: 3,
+              nama: "Siti Syafa Marwa",
+              nim: "4251250017",
+              peran: "Content & QA",
+              foto: "foto awa.png"
+            }
+          ];
+
+          return (
+            <div className="max-w-4xl mx-auto text-center space-y-10 animate-in fade-in duration-500">
+              <div className="space-y-3">
+                <h2 className="text-3xl font-bold text-theme-900">Tentang Tim Pengembang</h2>
+                <p className="text-theme-700 font-medium">Proyek ini dibuat untuk memenuhi tugas mata kuliah Sistem Operasi.</p>
+              </div>
+
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+                {tim.map(anggota => (
+                  <div key={anggota.id} className="bg-white p-6 rounded-2xl shadow-md border border-theme-300 flex flex-col items-center group hover:-translate-y-2 transition-transform duration-300">
+                    {/* Wadah Foto */}
+                    <div className="w-28 h-28 bg-theme-100 rounded-full mb-5 flex items-center justify-center overflow-hidden border-4 border-theme-300 group-hover:border-theme-500 transition-colors shadow-inner">
+                      {anggota.foto ? (
+                        <img src={anggota.foto} alt={anggota.nama} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" />
+                      ) : (
+                        <i className="fas fa-user text-4xl text-theme-300 group-hover:text-theme-500"></i>
+                      )}
+                    </div>
+                    
+                    <h4 className="font-bold text-lg text-theme-900">{anggota.nama}</h4>
+                    <p className="text-sm text-theme-700 mb-3 font-mono">NIM: {anggota.nim}</p>
+                    <span className="px-4 py-1.5 bg-theme-100 text-xs rounded-full font-bold text-theme-700 border border-theme-300">
+                      {anggota.peran}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-theme-900 rounded-2xl p-8 shadow-xl mt-12 text-left relative overflow-hidden">
+                <div className="absolute -right-10 -top-10 text-theme-700/50 opacity-20">
+                  <i className="fas fa-university" style={{fontSize: '12rem'}}></i>
+                </div>
+                <h3 className="font-bold text-2xl text-theme-100 mb-4 relative z-10">Informasi Mata Kuliah</h3>
+                <ul className="space-y-3 text-theme-300 relative z-10 text-lg">
+                  <li><strong className="text-theme-100">Mata Kuliah:</strong> Sistem Operasi (SO)</li>
+                  <li><strong className="text-theme-100">Dosen Pengampu:</strong> Dr. Zulfahmi Indra, S.Si., M.Cs.</li>
+                  <li><strong className="text-theme-100">Institusi:</strong> Universitas Negeri Medan</li>
+                  <li><strong className="text-theme-100">Tahun Ajaran:</strong> 2026/2027</li>
+                </ul>
+              </div>
+            </div>
+          );
+        }
+
+        // Render
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
