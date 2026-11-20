@@ -73,9 +73,11 @@ Proyek ini dikembangkan oleh:
 - **Siti Syafa Marwa** - 4251250017 - *(Content & QA)*
 
 **Mata Kuliah:** Sistem Operasi  
+
 **Dosen Pengampu:** Dr. Zulfahmi Indra, S.Si., M.Cs.
 
 **Institusi:** Universitas Negeri Medan
+
 **Tahun Ajaran:** 2026/2027
 
 ---
