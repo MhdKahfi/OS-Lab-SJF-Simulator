@@ -74,6 +74,7 @@ Proyek ini dikembangkan oleh:
 
 **Mata Kuliah:** Sistem Operasi  
 **Dosen Pengampu:** Dr. Zulfahmi Indra, S.Si., M.Cs.
+
 **Institusi:** Universitas Negeri Medan
 **Tahun Ajaran:** 2026/2027
 
