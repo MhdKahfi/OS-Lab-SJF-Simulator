@@ -68,13 +68,13 @@ Sangat mudah! Anda **tidak perlu** menginstal server, NPM, atau *environment* ap
 
 Proyek ini dikembangkan oleh:
 
-- **[Nama Anggota 1]** - [NIM] - *(Logic & Algorithm)*
-- **[Nama Anggota 2]** - [NIM] - *(UI/UX & Frontend)*
-- **[Nama Anggota 3]** - [NIM] - *(Content & QA)*
+- **Siti Aulya Azahra** - 4251250009 - *(Logic & Algorithm)*
+- **Muhammad Kahfi** - 4253250020 - *(UI/UX & Frontend)*
+- **Siti Syafa Marwa** - 4251250017 - *(Content & QA)*
 
 **Mata Kuliah:** Sistem Operasi  
-**Dosen Pengampu:** [Nama Dosen]  
-**Institusi:** [Nama Kampus Anda]  
+**Dosen Pengampu:** Dr. Zulfahmi Indra, S.Si., M.Cs.
+**Institusi:** Universitas Negeri Medan
 **Tahun Ajaran:** 2026/2027
 
 ---
